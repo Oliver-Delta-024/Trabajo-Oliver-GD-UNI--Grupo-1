@@ -13,5 +13,11 @@ Primera parte de adaptación de habilidades para el player más un script de Pla
 Scripts Actualizados: GeneradorNivel1.cs, GeneradorNivel2.cs, GeneradorNivel3.cs
 Scripts Agregados (Con sus archivos .meta): Player.cs, GeneradorBase.cs
 Su ubicación es dentro de Assets en Scripts, solo hubo cambios ahí
-----22/07/2026(Proximamente)----
-Finalización de avance con Habilidades de Player o Gran Avance (Falta tocar los Scenes...)
+----23/07/2026(Madrugada)----
+Finalización de avance con Habilidades de Player, Sistema de Cooldown de Habilidades Habilitado,
+Habilidad 2 (Fusiona con apretar "2" y trata de Ralentizar Discos) Lista y Funcional.
+Adaptación de Uso de Git para optimizar actualizaciones
+Archivos Actualizados: Todos
+Todo el GitHub se actualizo, este es el único archivo que no pertenece a la carpeta original del proyecto.
+----23/07/2026(Proximamente)----
+Corrección de Detalles Visuales y Funcionales y Balanceo de Generadores. (En espera del Player de Yoel y diseños de Gonzalo para finalizar el proyecto).
