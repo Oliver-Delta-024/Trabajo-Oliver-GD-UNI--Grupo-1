@@ -1,0 +1,911 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Player : MonoBehaviour
+{
+    //==================================================
+    // VIDA
+    //==================================================
+
+    [Header("Vida")]
+
+    [SerializeField]
+    private int vidasMaximas = 3;
+
+    private int vidasActuales;
+
+
+    //==================================================
+    // HABILIDADES
+    //==================================================
+
+    [Header("Cooldown General")]
+
+    [SerializeField]
+    private float cooldownGeneral = 10f;
+
+    private bool jugadorPausado = false;
+
+    //--------------------------
+    // TELETRANSPORTE
+    //--------------------------
+
+    private bool teleportDisponible = true;
+
+    private float cooldownTeleport = 0f;
+
+
+    //--------------------------
+    // RALENTIZAR
+    //--------------------------
+
+    private bool slowDisponible = true;
+
+    private float cooldownSlow = 0f;
+
+    private bool slowActivo = false;
+
+    [SerializeField]
+    private float duracionSlow = 5f;
+
+    private float tiempoRestanteSlow = 0f;
+
+    public GeneradorBase generador;
+
+    //--------------------------
+    // MURO
+    //--------------------------
+
+    private bool muroDisponible = true;
+
+    private float cooldownMuro = 0f;
+
+    private bool muroActivo = false;
+
+    [SerializeField]
+    private int vidaInicialMuro = 15;
+
+    private int vidaActualMuro = 0;
+
+    private Vector2 posicionMuro;
+
+
+    //==================================================
+    // GUARDADO
+    //==================================================
+
+    private string prefijoGuardado;
+
+    private int nivelActual;
+
+
+    //==================================================
+    // UI (Se implementará después)
+    //==================================================
+
+    [Header("UI Habilidades")]
+    [SerializeField] private Image iconoTeleport;
+    [SerializeField] private Image iconoSlow;
+    [SerializeField] private Image iconoMuro;
+
+    private Color colorOriginalTeleport;
+    private Color colorOriginalSlow;
+    private Color colorOriginalMuro;
+
+    [SerializeField]
+    private Color colorCooldown = new Color(0.25f, 0.25f, 0.25f, 1f);
+
+
+    //==================================================
+    // UNITY
+    //==================================================
+    public void InicializarJugador()
+    {
+        // Vida
+        InicializarVidas();
+
+        // Teletransporte
+        teleportDisponible = true;
+        cooldownTeleport = 0f;
+
+        // Ralentización
+        slowDisponible = true;
+        cooldownSlow = 0f;
+        slowActivo = false;
+        tiempoRestanteSlow = 0f;
+
+        // Muro
+        muroDisponible = true;
+        cooldownMuro = 0f;
+        muroActivo = false;
+
+        vidaActualMuro = 0;
+        posicionMuro = Vector2.zero;
+        muroActual = null;
+
+        // Mostrar correctamente los iconos.
+        ActualizarIconosHabilidades();
+    }
+
+    private void ActualizarIcono(Image icono, Color colorOriginal, bool disponible, float cooldown)
+    {
+        if (icono == null)
+            return;
+
+        if (disponible)
+        {
+            icono.color = colorOriginal;
+            return;
+        }
+
+        float progreso = 1f - (cooldown / cooldownGeneral);
+
+        Color colorActual =
+            Color.Lerp(colorCooldown,
+                       colorOriginal,
+                       progreso);
+
+        icono.color = colorActual;
+    }
+
+    private void ActualizarIconosHabilidades()
+    {
+        ActualizarIcono(
+        iconoTeleport,
+        colorOriginalTeleport,
+        teleportDisponible,
+        cooldownTeleport);
+
+        ActualizarIcono(
+            iconoSlow,
+            colorOriginalSlow,
+            slowDisponible,
+            cooldownSlow);
+
+        ActualizarIcono(
+            iconoMuro,
+            colorOriginalMuro,
+            muroDisponible,
+            cooldownMuro);
+    }
+
+    public void PausarJugador()
+    {
+        jugadorPausado = true;
+    }
+
+    public void ReanudarJugador()
+    {
+        jugadorPausado = false;
+        if (slowActivo && generador != null)
+        {
+            generador.ActivarRalentizacion(0.5f);
+        }
+    }
+
+    void Start()
+    {
+
+    }
+
+    void Awake()
+    {
+        if (iconoTeleport != null)
+            colorOriginalTeleport = iconoTeleport.color;
+
+        if (iconoSlow != null)
+            colorOriginalSlow = iconoSlow.color;
+
+        if (iconoMuro != null)
+            colorOriginalMuro = iconoMuro.color;
+    }
+
+    void Update()
+    {
+        if (jugadorPausado)
+            return;
+
+        //--------------------------
+        // MOVIMIENTO
+        //--------------------------
+
+        // Se implementará cuando
+        // llegue el Player definitivo.
+
+        //--------------------------
+        // TELETRANSPORTE
+        //--------------------------
+
+        //ActualizarTeleport();
+
+        ActualizarCooldownTeleport();
+
+        //--------------------------
+        // RALENTIZACIÓN
+        //--------------------------
+
+        ActualizarRalentizacion();
+
+        ActualizarCooldownSlow();
+
+        //--------------------------
+        // MURO
+        //--------------------------
+
+        ActualizarMuro();
+
+        ActualizarCooldownMuro();
+
+        ActualizarIconosHabilidades();
+    }
+
+
+    //==================================================
+    // CONFIGURACIÓN
+    //==================================================
+
+    public void ConfigurarGuardado(int nivel)
+    {
+        nivelActual = nivel;
+
+        prefijoGuardado =
+            "Nivel" + nivelActual + "_Player_";
+    }
+
+
+    //==========================================
+    // SISTEMA DE VIDAS
+    //==========================================
+
+    // Inicializa las vidas al comenzar una partida nueva.
+    public void InicializarVidas()
+    {
+        vidasActuales = vidasMaximas;
+
+        ActualizarUIVidas();
+    }
+
+    // Devuelve las vidas actuales.
+    public int ObtenerVidas()
+    {
+        return vidasActuales;
+    }
+
+    // Devuelve las vidas máximas.
+    public int ObtenerVidasMaximas()
+    {
+        return vidasMaximas;
+    }
+
+    // Devuelve la posición actual del jugador.
+    public Vector2 ObtenerPosicion()
+    {
+        return transform.position;
+    }
+
+    // Restaura las vidas guardadas.
+    public void RestaurarVidas(int vidas)
+    {
+        vidasActuales = vidas;
+
+        ActualizarUIVidas();
+    }
+
+    // Restaura la posición del jugador.
+    public void RestaurarPosicion(Vector2 posicion)
+    {
+        transform.position = posicion;
+    }
+
+    // El jugador recibe daño.
+    public void PerderVida()
+    {
+        if (vidasActuales <= 0)
+            return;
+
+        vidasActuales--;
+
+        Debug.Log(
+            "Player -> Vida perdida. Vidas restantes: "
+            + vidasActuales);
+
+        ActualizarUIVidas();
+
+        if (vidasActuales <= 0)
+        {
+            Morir();
+        }
+    }
+
+    // Actualizará la UI cuando exista el Canvas.
+    private void ActualizarUIVidas()
+    {
+        // TODO:
+        // Cambiar sprite según:
+        //
+        // 3 vidas -> Sprite3
+        // 2 vidas -> Sprite2
+        // 1 vida -> Sprite1
+    }
+
+    // Lógica cuando el jugador pierde todas las vidas.
+    private void Morir()
+    {
+        Debug.Log("Player derrotado.");
+
+        // TODO:
+        // Avisar al Nivel.
+        // Detener habilidades.
+        // Mostrar Game Over.
+    }
+
+    //==================================================
+    // TELETRANSPORTE
+    //==================================================
+
+    /*
+        FUNCIONAMIENTO GENERAL
+
+        - El jugador presiona la tecla 1.
+
+        - Si la habilidad está disponible:
+            • Se activa el teletransporte.
+            • Comienza el cooldown.
+            • La habilidad deja de estar disponible.
+
+        - Si el cooldown no ha terminado:
+            • No ocurre nada.
+    */
+
+
+    public void ActivarTeleport()
+    {
+        // Si está en cooldown,
+        // no puede utilizarse.
+        if (!teleportDisponible)
+            return;
+
+        teleportDisponible = false;
+
+        ActualizarIconosHabilidades();
+
+        cooldownTeleport = cooldownGeneral;
+
+        /*
+            AQUÍ SE IMPLEMENTARÁ
+            EL TELETRANSPORTE.
+
+            Pasos futuros:
+
+            1. Obtener dirección.
+
+            2. Calcular nueva posición.
+
+            3. Validar límites.
+
+            4. Mover jugador.
+        */
+
+        Debug.Log("Player -> Teletransporte activado.");
+    }
+
+
+    private void ActualizarCooldownTeleport()
+    {
+        if (teleportDisponible)
+            return;
+
+        cooldownTeleport -= Time.deltaTime;
+
+        if (cooldownTeleport <= 0f)
+        {
+            cooldownTeleport = 0f;
+
+            teleportDisponible = true;
+
+            //ActualizarIconosHabilidades();
+
+            Debug.Log(
+                "Player -> Teletransporte disponible nuevamente.");
+        }
+    }
+
+
+    /*
+        GUARDAR TELETRANSPORTE
+
+        Se guardará:
+
+            teleportDisponible
+
+            cooldownTeleport
+    */
+
+
+    /*
+        RESTAURAR TELETRANSPORTE
+
+        Al cargar una partida:
+
+            teleportDisponible
+
+            cooldownTeleport
+
+        volverán exactamente al estado
+        en que fueron guardados.
+    */
+
+    /*
+        Nota: El teletransporte NO dependerá de ningún otro script.
+
+        Toda su lógica será administrada por Player.cs.
+
+        Únicamente modificará la posición del jugador.
+    */
+
+    //==================================================
+    // RALENTIZAR
+    //==================================================
+
+    // Activa la habilidad de ralentización.
+    public void ActivarRalentizacion()
+    {
+        // Si está en cooldown, no puede usarse.
+        if (!slowDisponible)
+            return;
+
+        slowDisponible = false;
+
+        ActualizarIconosHabilidades();
+
+        slowActivo = true;
+
+        tiempoRestanteSlow = duracionSlow;
+
+        cooldownSlow = cooldownGeneral;
+
+        // Aplica el efecto a todos los discos activos.
+        if (generador != null)
+        {
+            generador.ActivarRalentizacion(0.5f);
+        }
+
+        Debug.Log("Player -> Ralentización activada.");
+    }
+
+    // Controla la duración de la habilidad.
+    private void ActualizarRalentizacion()
+    {
+        if (!slowActivo)
+            return;
+
+        tiempoRestanteSlow -= Time.deltaTime;
+
+        if (tiempoRestanteSlow <= 0f)
+        {
+            FinalizarRalentizacion();
+        }
+    }
+
+    // Finaliza la ralentización.
+    private void FinalizarRalentizacion()
+    {
+        slowActivo = false;
+
+        tiempoRestanteSlow = 0f;
+
+        if (generador != null)
+        {
+            generador.DesactivarRalentizacion();
+        }
+
+        Debug.Log("Player -> Ralentización finalizada.");
+    }
+
+    // Controla el cooldown.
+    private void ActualizarCooldownSlow()
+    {
+        if (slowDisponible)
+            return;
+
+        cooldownSlow -= Time.deltaTime;
+
+        if (cooldownSlow <= 0f)
+        {
+            cooldownSlow = 0f;
+
+            slowDisponible = true;
+
+            //ActualizarIconosHabilidades();
+
+            Debug.Log("Player -> Ralentización disponible nuevamente.");
+        }
+    }
+
+    //==================================================
+    // MURO
+    //==================================================
+
+    // Referencia al muro actualmente colocado.
+    private Muro muroActual;
+
+    // Activa la habilidad del muro.
+    public void ActivarMuro()
+    {
+        // Si está en cooldown, no puede usarse.
+        if (!muroDisponible)
+            return;
+
+        // Si ya existe un muro activo, no crear otro.
+        if (muroActivo)
+            return;
+
+        muroDisponible = false;
+
+        ActualizarIconosHabilidades();
+
+        muroActivo = true;
+
+        cooldownMuro = cooldownGeneral;
+
+        /*
+            AQUÍ SE IMPLEMENTARÁ LA CREACIÓN DEL MURO.
+
+            Pasos futuros:
+
+            1. Obtener la dirección actual del Player.
+
+            2. Calcular una posición delante del Player.
+
+            3. Instanciar el prefab del muro.
+
+            4. Guardar la referencia:
+
+                    muroActual = muroInstanciado.GetComponent<Muro>();
+
+            5. Inicializar:
+
+                    vidaActualMuro = vidaInicialMuro;
+
+                    posicionMuro = muroActual.transform.position;
+        */
+
+        Debug.Log("Player -> Muro colocado.");
+    }
+
+    // Actualiza continuamente la información del muro.
+    private void ActualizarMuro()
+    {
+        if (!muroActivo)
+            return;
+
+        // Si el muro fue destruido.
+        if (muroActual == null)
+        {
+            muroActivo = false;
+
+            vidaActualMuro = 0;
+
+            return;
+        }
+
+        // Mantener actualizados los datos para el guardado.
+        vidaActualMuro =
+            muroActual.ObtenerResistencia();
+
+        posicionMuro =
+            muroActual.transform.position;
+    }
+
+    // Controla el cooldown del muro.
+    private void ActualizarCooldownMuro()
+    {
+        if (muroDisponible)
+            return;
+
+        cooldownMuro -= Time.deltaTime;
+
+        if (cooldownMuro <= 0f)
+        {
+            cooldownMuro = 0f;
+
+            muroDisponible = true;
+
+            //ActualizarIconosHabilidades();
+
+            Debug.Log("Player -> Muro disponible nuevamente.");
+        }
+    }
+
+    //==================================================
+    // GUARDAR
+    //==================================================
+
+    public void GuardarJugador()
+    {
+        //--------------------------
+        // VIDAS
+        //--------------------------
+
+        PlayerPrefs.SetInt(
+            prefijoGuardado + "VidasActuales",
+            vidasActuales);
+
+        //--------------------------
+        // POSICIÓN
+        //--------------------------
+
+        // TODO:
+        // Guardar la posición actual del Player.
+        //
+        // PlayerPrefs.SetFloat(
+        //     prefijoGuardado + "PosX",
+        //     transform.position.x);
+        //
+        // PlayerPrefs.SetFloat(
+        //     prefijoGuardado + "PosY",
+        //     transform.position.y);
+
+        //--------------------------
+        // TELETRANSPORTE
+        //--------------------------
+
+        // TODO:
+        // Guardar:
+        //
+        // - cooldownTeleport
+        // - teleportDisponible
+        // - dirección actual
+        // - cualquier dato necesario
+        // para restaurar el movimiento.
+        PlayerPrefs.SetInt(
+            prefijoGuardado + "TeleportDisponible",
+            teleportDisponible ? 1 : 0);
+
+        PlayerPrefs.SetFloat(
+            prefijoGuardado + "CooldownTeleport",
+            cooldownTeleport);
+
+        //--------------------------
+        // RALENTIZAR
+        //--------------------------
+
+        PlayerPrefs.SetInt(
+            prefijoGuardado + "SlowDisponible",
+            slowDisponible ? 1 : 0);
+
+        PlayerPrefs.SetFloat(
+            prefijoGuardado + "CooldownSlow",
+            cooldownSlow);
+
+        PlayerPrefs.SetInt(
+            prefijoGuardado + "SlowActivo",
+            slowActivo ? 1 : 0);
+
+        PlayerPrefs.SetFloat(
+            prefijoGuardado + "TiempoSlow",
+            tiempoRestanteSlow);
+
+        //--------------------------
+        // MURO
+        //--------------------------
+
+        PlayerPrefs.SetInt(
+            prefijoGuardado + "MuroDisponible",
+            muroDisponible ? 1 : 0);
+
+        PlayerPrefs.SetFloat(
+            prefijoGuardado + "CooldownMuro",
+            cooldownMuro);
+
+        PlayerPrefs.SetInt(
+            prefijoGuardado + "MuroActivo",
+            muroActivo ? 1 : 0);
+
+        PlayerPrefs.SetInt(
+            prefijoGuardado + "VidaMuro",
+            vidaActualMuro);
+
+        // TODO:
+        // Cuando el sistema de colocación del muro
+        // esté terminado también se guardará:
+        //
+        // PlayerPrefs.SetFloat(
+        //     prefijoGuardado + "MuroPosX",
+        //     posicionMuro.x);
+        //
+        // PlayerPrefs.SetFloat(
+        //     prefijoGuardado + "MuroPosY",
+        //     posicionMuro.y);
+
+        //--------------------------
+        // GUARDAR
+        //--------------------------
+
+        PlayerPrefs.Save();
+    }
+
+    //==================================================
+    // RESTAURAR
+    //==================================================
+
+    public void RestaurarJugador()
+    {
+        //--------------------------
+        // VIDAS
+        //--------------------------
+
+        vidasActuales =
+            PlayerPrefs.GetInt(
+                prefijoGuardado + "VidasActuales",
+                vidasMaximas);
+
+        ActualizarUIVidas();
+
+        //--------------------------
+        // POSICIÓN
+        //--------------------------
+
+        // TODO:
+        // Restaurar la posición del Player.
+        //
+        // float posX =
+        //     PlayerPrefs.GetFloat(
+        //         prefijoGuardado + "PosX");
+        //
+        // float posY =
+        //     PlayerPrefs.GetFloat(
+        //         prefijoGuardado + "PosY");
+        //
+        // transform.position =
+        //     new Vector2(posX, posY);
+
+        //--------------------------
+        // TELETRANSPORTE
+        //--------------------------
+
+        // TODO:
+        // Restaurar:
+        //
+        // cooldownTeleport
+        // teleportDisponible
+        // dirección actual
+        // demás datos necesarios.
+
+        teleportDisponible =
+            PlayerPrefs.GetInt(
+                prefijoGuardado + "TeleportDisponible",
+                1) == 1;
+
+        cooldownTeleport =
+            PlayerPrefs.GetFloat(
+                prefijoGuardado + "CooldownTeleport",
+                0f);
+
+        //--------------------------
+        // RALENTIZAR
+        //--------------------------
+
+        slowDisponible =
+            PlayerPrefs.GetInt(
+                prefijoGuardado + "SlowDisponible",
+                1) == 1;
+
+        cooldownSlow =
+            PlayerPrefs.GetFloat(
+                prefijoGuardado + "CooldownSlow",
+                0f);
+
+        slowActivo =
+            PlayerPrefs.GetInt(
+                prefijoGuardado + "SlowActivo",
+                0) == 1;
+
+        tiempoRestanteSlow =
+            PlayerPrefs.GetFloat(
+                prefijoGuardado + "TiempoSlow",
+                0f);
+
+        //--------------------------
+        // MURO
+        //--------------------------
+
+        muroDisponible =
+            PlayerPrefs.GetInt(
+                prefijoGuardado + "MuroDisponible",
+                1) == 1;
+
+        cooldownMuro =
+            PlayerPrefs.GetFloat(
+                prefijoGuardado + "CooldownMuro",
+                0f);
+
+        muroActivo =
+            PlayerPrefs.GetInt(
+                prefijoGuardado + "MuroActivo",
+                0) == 1;
+
+        vidaActualMuro =
+            PlayerPrefs.GetInt(
+                prefijoGuardado + "VidaMuro",
+                vidaInicialMuro);
+
+        // TODO:
+        // Restaurar la posición del muro cuando
+        // exista el sistema de colocación.
+        //
+        // float muroX =
+        //     PlayerPrefs.GetFloat(
+        //         prefijoGuardado + "MuroPosX");
+        //
+        // float muroY =
+        //     PlayerPrefs.GetFloat(
+        //         prefijoGuardado + "MuroPosY");
+        //
+        // posicionMuro =
+        //     new Vector2(muroX, muroY);
+
+        // TODO:
+        // Si muroActivo == true,
+        // volver a crear el muro utilizando
+        // posicionMuro y vidaActualMuro.
+
+        // Restaurar el estado visual de las habilidades.
+        ActualizarIconosHabilidades();
+    }
+
+    //==================================================
+    // GETTERS
+    //==================================================
+
+    //--------------------------
+    // TELETRANSPORTE
+    //--------------------------
+
+    public bool TeleportDisponible()
+    {
+        return teleportDisponible;
+    }
+
+    //--------------------------
+    // RALENTIZAR
+    //--------------------------
+
+    public bool SlowDisponible()
+    {
+        return slowDisponible;
+    }
+
+    public bool SlowActivo()
+    {
+        return slowActivo;
+    }
+
+    //--------------------------
+    // MURO
+    //--------------------------
+
+    public bool MuroDisponible()
+    {
+        return muroDisponible;
+    }
+
+    public bool MuroActivo()
+    {
+        return muroActivo;
+    }
+
+    public int ObtenerVidaMuro()
+    {
+        return vidaActualMuro;
+    }
+
+    //--------------------------
+    // NIVEL
+    //--------------------------
+
+    public int ObtenerNivel()
+    {
+        return nivelActual;
+    }
+}
