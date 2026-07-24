@@ -80,7 +80,7 @@ public class Player : MonoBehaviour
 
 
     //==================================================
-    // UI (Se implementará después)
+    // UI
     //==================================================
 
     [Header("UI Habilidades")]
@@ -95,6 +95,16 @@ public class Player : MonoBehaviour
     [SerializeField]
     private Color colorCooldown = new Color(0.25f, 0.25f, 0.25f, 1f);
 
+    [Header("UI Vidas")]
+
+    [SerializeField] private Image imagenVidas;
+
+    [SerializeField] private Sprite sprite3Vidas;
+    [SerializeField] private Sprite sprite2Vidas;
+    [SerializeField] private Sprite sprite1Vida;
+    [SerializeField] private Sprite sprite0Vidas;
+
+    public System.Action OnPlayerMuerto;
 
     //==================================================
     // UNITY
@@ -320,12 +330,27 @@ public class Player : MonoBehaviour
     // Actualizará la UI cuando exista el Canvas.
     private void ActualizarUIVidas()
     {
-        // TODO:
-        // Cambiar sprite según:
-        //
-        // 3 vidas -> Sprite3
-        // 2 vidas -> Sprite2
-        // 1 vida -> Sprite1
+        if (imagenVidas == null)
+            return;
+
+        switch (vidasActuales)
+        {
+            case 3:
+                imagenVidas.sprite = sprite3Vidas;
+                break;
+
+            case 2:
+                imagenVidas.sprite = sprite2Vidas;
+                break;
+
+            case 1:
+                imagenVidas.sprite = sprite1Vida;
+                break;
+
+            default:
+                imagenVidas.sprite = sprite0Vidas;
+                break;
+        }
     }
 
     // Lógica cuando el jugador pierde todas las vidas.
@@ -333,6 +358,7 @@ public class Player : MonoBehaviour
     {
         Debug.Log("Player derrotado.");
 
+        OnPlayerMuerto?.Invoke();
         // TODO:
         // Avisar al Nivel.
         // Detener habilidades.

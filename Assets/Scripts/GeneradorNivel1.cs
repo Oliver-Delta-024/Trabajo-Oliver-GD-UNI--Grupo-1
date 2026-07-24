@@ -27,6 +27,10 @@ public class GeneradorNivel1 : GeneradorBase
     private bool slowActivo = false;
     private float multiplicadorSlow = 1f;
 
+    private float probabilidadSegundoDisco = 0f;
+    private float probabilidadTercerDisco = 0f;
+    [SerializeField] public Nivel1 nivel;
+
     public void IniciarGeneracion()
     {
         if (rutinaGeneracion == null)
@@ -44,15 +48,95 @@ public class GeneradorNivel1 : GeneradorBase
         }
     }
 
+    void ActualizarDificultad()
+    {
+        float tiempo = nivel.ObtenerTiempo();
+
+        //-------------------------
+        // 0 - 30 segundos
+        //-------------------------
+        if (tiempo < 30f)
+        {
+            tiempoMinimo = 2.0f;
+            tiempoMaximo = 3.0f;
+
+            probabilidadSegundoDisco = 0f;
+            probabilidadTercerDisco = 0f;
+        }
+
+        //-------------------------
+        // 30 - 60 segundos
+        //-------------------------
+        else if (tiempo < 60f)
+        {
+            tiempoMinimo = 1.6f;
+            tiempoMaximo = 2.3f;
+
+            probabilidadSegundoDisco = 0.10f;
+            probabilidadTercerDisco = 0f;
+        }
+
+        //-------------------------
+        // 60 - 90 segundos
+        //-------------------------
+        else if (tiempo < 90f)
+        {
+            tiempoMinimo = 1.2f;
+            tiempoMaximo = 1.8f;
+
+            probabilidadSegundoDisco = 0.25f;
+            probabilidadTercerDisco = 0.03f;
+        }
+
+        //-------------------------
+        // 90 - 120 segundos
+        //-------------------------
+        else if (tiempo < 120f)
+        {
+            tiempoMinimo = 0.9f;
+            tiempoMaximo = 1.5f;
+
+            probabilidadSegundoDisco = 0.40f;
+            probabilidadTercerDisco = 0.08f;
+        }
+
+        //-------------------------
+        // 120 segundos en adelante
+        //-------------------------
+        else
+        {
+            tiempoMinimo = 0.6f;
+            tiempoMaximo = 1.1f;
+
+            probabilidadSegundoDisco = 0.60f;
+            probabilidadTercerDisco = 0.15f;
+        }
+    }
+
     IEnumerator GenerarDiscos()
     {
         while (true)
         {
+            // Ajustar dificultad según el tiempo de partida
+            ActualizarDificultad();
+
             float espera = Random.Range(tiempoMinimo, tiempoMaximo);
 
             yield return new WaitForSeconds(espera);
 
             GenerarDisco();
+
+            // Posibilidad de un segundo disco
+            if (Random.value < probabilidadSegundoDisco)
+            {
+                GenerarDisco();
+            }
+
+            // Posibilidad de un tercer disco
+            if (Random.value < probabilidadTercerDisco)
+            {
+                GenerarDisco();
+            }
         }
     }
 
