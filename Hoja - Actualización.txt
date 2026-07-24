@@ -21,5 +21,7 @@ Archivos Actualizados: Todos
 Todo el GitHub se actualizo, este es el único archivo que no pertenece a la carpeta original del proyecto.
 ----23/07/2026(Noche)----
 Corrección de Detalles Visuales con Canvas
-----24/07/2026(Próximamente)----
-Preparar Canvas para UI de Vidas y Muerte de Jugador. Además de Balanceo de Generadores
+----24/07/2026(Madrugada)----
+Agregado de Canvas para Tema de Vidas de Player y el Game Over. Balanceo y generación dinámica de generadores de discos
+----24/07/2026(Proximamente)----
+Coordinar detalles de player con eventos y ver el tema de cámara... Y discutir con Gonzalo para los diseños.
